@@ -12,16 +12,12 @@ import {
 } from 'react-native'
 import ToastExample from '../modules/ToastExample';
 import Printer from '../modules/PrinterManager';
+import ApiManager from '../api/ApiManager';
 
 export class ListScreen extends React.Component {
-    static navigationOptions = {
-        title: 'List',
-    };
-
     constructor(props) {
         super(props);
         this.state = {
-            items: [],
             isLoading: true
         };
     }
@@ -37,40 +33,29 @@ export class ListScreen extends React.Component {
     }
 
     componentDidMount() {
-        return fetch('https://api.coinmarketcap.com/v1/ticker')
-            .then((response) => response.json())
-            .then((responseJson) => {
-                let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-                this.setState({
-                    //isLoading: false,
-                    dataAll: responseJson,
-                    dataSource: ds.cloneWithRows(responseJson)
-                }, function () {
-                    this.setState({refreshing: false});
-                    this.loadImages()
-                });
-            })
-            .catch((error) => {
-                console.error(error);
+        ApiManager.getAllCoins((responseJson) => {
+            let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+            this.setState({
+                dataAll: responseJson,
+                dataSource: ds.cloneWithRows(responseJson),
+                refreshing: false
+            }, function () {
+                this.loadImages()
             });
+        })
     }
 
     loadImages() {
-        return fetch('https://www.cryptocompare.com/api/data/coinlist').then((response) => response.json())
-            .then((responseJson) => {
-                let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-                this.setState({
-                    isLoading: false,
-                    dataAll: responseJson,
-                    dataImages: responseJson.Data
-                }, function () {
-                    this.setState({refreshing: false});
-                    this.renderListView()
-                });
-            })
-            .catch((error) => {
-                console.error(error);
+        ApiManager.getImages((responseJson) => {
+            this.setState({
+                isLoading: false,
+                refreshing: false,
+                dataAll: responseJson,
+                dataImages: responseJson.Data
+            }, function () {
+                this.renderListView()
             });
+        })
     }
 
     listViewItemSeparator() {
@@ -108,12 +93,12 @@ export class ListScreen extends React.Component {
                         />}
                     dataSource={this.state.dataSource}
                     renderSeparator={this.listViewItemSeparator}
-                    renderRow={(rowData, sectionID, rowID, highlightRow) => this.renderRow(rowData, sectionID, rowID, highlightRow)}/>
+                    renderRow={(rowData) => this.renderRow(rowData)}/>
             </View>
         );
     }
 
-    renderRow(rowData, sectionID, rowID, highlightRow) {
+    renderRow(rowData) {
         let swipeBtns = [
             {
                 text: 'Delete',
@@ -143,7 +128,7 @@ export class ListScreen extends React.Component {
                 urlImage = `https://www.cryptocompare.com${this.state.dataImages[key].ImageUrl}`
             }
         }
-        if (urlImage == null){
+        if (urlImage == null) {
             urlImage = 'https://facebook.github.io/react-native/docs/assets/favicon.png'
         }
 
@@ -194,7 +179,8 @@ export class ListScreen extends React.Component {
     }
 
     longPress(rowData) {
-        this.showMessage(rowData.id + '')
+        this.props.navigation.navigate('InfoScreen', {data: rowData, image: urlImage})
+        //this.showMessage(rowData.id + '')
         //    alert(rowData.id)
     }
 
@@ -257,22 +243,26 @@ const styles = StyleSheet.create({
         height: 40
     },
     textLeftUp: {
+        color: '#000',
         fontWeight: 'bold',
         marginLeft: 6,
         fontSize: 16,
     },
     textLeftDown: {
-        marginLeft: 2,
+        color: '#000',
+        marginLeft: 6,
         marginTop: 4,
         fontSize: 16
     },
     textRightUp: {
+        color: '#000',
         fontWeight: 'bold',
         textAlign: 'right',
         marginRight: 2,
         fontSize: 16,
     },
     textRightDown: {
+        color: '#000',
         textAlign: 'right',
         marginRight: 2,
         marginTop: 4,
