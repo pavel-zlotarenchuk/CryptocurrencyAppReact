@@ -179,11 +179,11 @@ export class ListScreen extends React.Component {
     }
 
     longPress(rowData) {
-        this.props.navigation.navigate('InfoScreen', {data: rowData, image: urlImage})
-        //this.showMessage(rowData.id + '')
+        this.showMessage(rowData.id + '')
         //    alert(rowData.id)
     }
 
+    // Example return value from native code
     returnValue(rowData) {
         if (this.isIOS()) {
             Printer.getValue(rowData.id, function (error, data) {

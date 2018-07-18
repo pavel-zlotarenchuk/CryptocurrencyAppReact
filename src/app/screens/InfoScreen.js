@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
-import {ActivityIndicator, Image, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Image, StyleSheet, Text, View, Alert} from 'react-native';
 import Line from '../components/chart/Line';
 import {Range, RANGES} from '../redux/Chart';
 import Switcher from "../components/range/Switcher";
 import ApiManager from '../api/ApiManager'
+import Permissions from 'react-native-permissions'
 
 export class InfoScreen extends Component {
     constructor(props) {
@@ -14,6 +15,11 @@ export class InfoScreen extends Component {
             isLoading: true,
             prices: []
         }
+    }
+
+    componentDidMount() {
+        // Example use permission
+        // this.alertForPermission()
     }
 
     render() {
@@ -78,6 +84,7 @@ export class InfoScreen extends Component {
                         ranges={RANGES}
                         current={this.state.range}
                         onSelectRange={(range: Range) => {
+                            this.state.range = range
                             this.state.isLoading = true
                             this.state.prices = []
                             if (null != this.state.coinKey) {
@@ -111,18 +118,25 @@ export class InfoScreen extends Component {
     getRates(coinKey: string, range: Range) {
         ApiManager.getDataChart(coinKey, range, (responseJson) => {
             var data = responseJson.Data
-            for (var i = 0; i < data.length; i++){
+            for (var i = 0; i < data.length; i++) {
                 this.state.prices[i] = data[i].high
             }
             this.setState({
-                range: range,
                 isLoading: false
             }, function () {
-                //    this.renderScreen()
+                this.renderScreen()
             })
         })
     }
 
+    // Example use permission
+    alertForPermission() {
+        Permissions.request('camera', { type: ['alert', 'badge'] }).then(
+            response => {
+                this.setState({ cameraPermission: response })
+            },
+        )
+    }
 };
 
 export default InfoScreen;
