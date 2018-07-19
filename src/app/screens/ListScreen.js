@@ -60,13 +60,7 @@ export class ListScreen extends React.Component {
 
     listViewItemSeparator() {
         return (
-            <View
-                style={{
-                    height: .5,
-                    width: "100%",
-                    backgroundColor: "#000",
-                }}
-            />
+            <View style={styles.separator}/>
         );
     }
 
@@ -75,7 +69,7 @@ export class ListScreen extends React.Component {
             return (
                 <View style={styles.container}>
                     <ActivityIndicator/>
-                    <Text>Loading...</Text>
+                    <Text style={{color: '#fff'}}>Loading...</Text>
                 </View>
             );
         }
@@ -84,7 +78,7 @@ export class ListScreen extends React.Component {
 
     renderListView() {
         return (
-            <View>
+            <View style={styles.container}>
                 <ListView
                     refreshControl={
                         <RefreshControl
@@ -92,7 +86,7 @@ export class ListScreen extends React.Component {
                             onRefresh={this.onRefresh.bind(this)}
                         />}
                     dataSource={this.state.dataSource}
-                    renderSeparator={this.listViewItemSeparator}
+                    //    renderSeparator={this.listViewItemSeparator}
                     renderRow={(rowData) => this.renderRow(rowData)}/>
             </View>
         );
@@ -114,12 +108,17 @@ export class ListScreen extends React.Component {
             }
         ];
 
-        var percentDay = rowData.percent_change_24h
-        var percentHour = rowData.percent_change_1h
-        var color24h = percentDay > 0
-        var color1h = percentHour > 0
-        var greenColor = '#09a619'
-        var redColor = '#ff2320'
+        var percentDay = this.setSign(rowData.percent_change_24h)
+        var percentHour = this.setSign(rowData.percent_change_1h)
+
+        var priceUsd = ''
+        for (var i = 0; i < 7; i++){
+            if (i <= rowData.price_usd.length - 1) {
+                priceUsd += rowData.price_usd[i]
+            } else {
+                priceUsd += '0'
+            }
+        }
 
         var coinKey = rowData.symbol
         var urlImage
@@ -141,25 +140,30 @@ export class ListScreen extends React.Component {
                 onPress={this.openSecondActivity.bind(this, rowData, urlImage)}
                 //onPress={this.returnValue.bind(this, rowData)}
                 onLongPress={this.longPress.bind(this, rowData)}
-                underlayColor='blue'>
+                underlayColor='transparent'>
                 <View style={styles.cell}>
                     <View style={styles.rowContainer}>
-                        <Image style={styles.image}
+                        <Image style={styles.imageCoin}
                                source={{uri: urlImage}}
                         />
-                        <View style={styles.textContainer}>
+                        <View style={{flex: 1}}>
                             <Text style={styles.textLeftUp}> {rowData.symbol} |
                                 <Text style={{fontWeight: 'normal'}}> {rowData.name}</Text>
                             </Text>
-                            <Text style={styles.textLeftDown}> 24h:
-                                <Text style={{color: color24h ? greenColor : redColor}}> {percentDay}% </Text>
-                            </Text>
+                            <View style={styles.containerTime}>
+                                <Image style={{width: 28, height: 18}} source={require('../../../asset/ic_24h.png')}/>
+                                <Text style={styles.textDown}> {percentDay}% </Text>
+                            </View>
                         </View>
                         <View style={styles.textContainer}>
-                            <Text style={styles.textRightUp}>${rowData.price_usd} </Text>
-                            <Text style={styles.textRightDown}>1h:
-                                <Text style={{color: color1h ? greenColor : redColor}}>  {percentHour}% </Text>
-                            </Text>
+                            <View style={{alignItems: 'flex-start', width: 80}}>
+                                <Text style={styles.textRightUp}>${priceUsd} </Text>
+                                <View style={{flexDirection: 'row', paddingTop: 6}}>
+                                    <Image style={{width: 18, height: 18}}
+                                           source={require('../../../asset/ic_1h.png')}/>
+                                    <Text style={styles.textDown}>  {percentHour}% </Text>
+                                </View>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -167,6 +171,16 @@ export class ListScreen extends React.Component {
             //     </Swipeout>
         )
             ;
+    }
+
+    setSign(value){
+        if (value > 0){
+            return `+ ${Math.abs(value)}`
+        } else if (value < 0){
+            return `- ${Math.abs(value)}`
+        } else {
+            return Math.abs(value)
+        }
     }
 
     onRefresh() {
@@ -229,44 +243,47 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundColor: '#1A2035'
     },
     cell: {
         flex: 1,
-        padding: 4,
+        marginRight: 8,
+        marginLeft: 8,
+        marginTop: 8,
+        padding: 6,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF'
+        backgroundColor: '#252D47',
+        borderRadius: 15
     },
-    image: {
+    separator: {
+        height: 8,
+        width: "100%",
+        backgroundColor: "#1A2035"
+    },
+    imageCoin: {
         width: 40,
-        height: 40
+        height: 40,
+        borderRadius: 10
+    },
+    containerTime: {
+        flexDirection: 'row',
+        paddingLeft: 12,
+        paddingTop: 6
     },
     textLeftUp: {
-        color: '#000',
-        fontWeight: 'bold',
-        marginLeft: 6,
+        color: '#CDCCDD',
+        marginLeft: 8,
         fontSize: 16,
     },
-    textLeftDown: {
-        color: '#000',
-        marginLeft: 6,
-        marginTop: 4,
-        fontSize: 16
+    textDown: {
+        color: '#5F698D'
     },
     textRightUp: {
-        color: '#000',
-        fontWeight: 'bold',
-        textAlign: 'right',
-        marginRight: 2,
+        color: '#CDCCDD',
+        marginRight: 4,
         fontSize: 16,
-    },
-    textRightDown: {
-        color: '#000',
-        textAlign: 'right',
-        marginRight: 2,
-        marginTop: 4,
-        fontSize: 16
     },
     thumb: {
         width: 60,
@@ -274,11 +291,8 @@ const styles = StyleSheet.create({
         marginRight: 10
     },
     textContainer: {
-        flex: 1
-    },
-    separator: {
-        height: 1,
-        backgroundColor: '#dddddd'
+        flex: 1,
+        alignItems: 'flex-end'
     },
     price: {
         fontSize: 25,
